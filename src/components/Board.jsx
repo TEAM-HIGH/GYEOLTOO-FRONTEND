@@ -3,6 +3,7 @@ import ListColumn from './ListColumn'
 import searchIcon from '../assets/Search.png'
 import filterIcon from '../assets/Filter.png'
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const EMOJI_LIST = [
   '😀','🥲','🤩','😑','🤔','😡','😭','🤯','😨','💀',
   '🎉','🎁','🎨','💎','🥊','🏆','🎵','🔔','📢','🎧',
@@ -17,6 +18,7 @@ function Board({
   urgentMode, setUrgentMode,
   urgentThreshold,
   searchQuery, setSearchQuery,
+  expiredAction,
   onAddList,
   onUpdateListTitle, onDeleteList,
   onAddCard, onUpdateCard, onDeleteCard,
@@ -69,16 +71,16 @@ function Board({
 
           {/* 급함 표시 토글 */}
           <button
-            className={`urgent-toggle-btn ${urgentMode ? 'on' : ''}`}
+            className={`header-icon-btn ${urgentMode ? 'on' : ''}`}
             onClick={() => setUrgentMode(!urgentMode)}
-            title={`급함 표시 ${urgentMode ? 'ON' : 'OFF'}`}
+            title="급함 표시"
           >
             🚨
           </button>
 
           {/* 필터 버튼 */}
           <div className="filter-wrapper" ref={filterRef}>
-            <button className="filter-btn" onClick={openFilter}>
+            <button className="header-icon-btn" onClick={openFilter}>
               <img src={filterIcon} alt="필터" className="filter-icon-img" />
               <span>필터</span>
             </button>
@@ -131,6 +133,7 @@ function Board({
             urgentMode={urgentMode}
             urgentThreshold={urgentThreshold}
             searchQuery={searchQuery}
+            expiredAction={expiredAction}
             onUpdateListTitle={onUpdateListTitle}
             onDeleteList={onDeleteList}
             onAddCard={onAddCard}

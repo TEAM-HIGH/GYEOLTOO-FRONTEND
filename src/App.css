@@ -89,7 +89,7 @@ body {
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   z-index: 200;
-  min-width: 160px;
+  min-width: 180px;
   overflow: hidden;
 }
 
@@ -214,6 +214,30 @@ body {
   background-color: #ffe0e0;
 }
 
+/* 헤더 아이콘 버튼 (필터, 급함) - 호버 + border */
+.header-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px solid #c8a8a8;
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 38px;
+  cursor: pointer;
+  color: #555;
+  font-size: 14px;
+}
+
+.header-icon-btn:hover {
+  background-color: #f0d8d8;
+}
+
+.header-icon-btn.on {
+  background-color: #f0d8d8;
+  border-color: #d97070;
+}
+
 /* 필터 버튼 */
 .filter-wrapper {
   position: relative;
@@ -224,22 +248,22 @@ body {
   align-items: center;
   gap: 6px;
   background: none;
-  border: 1.5px solid #c8a8a8;
+  border: none;
   border-radius: 8px;
-  padding: 0 14px;
-  height: 42px;
+  padding: 0 12px;
+  height: 38px;
   cursor: pointer;
   color: #555;
   font-size: 14px;
 }
 
 .filter-btn:hover {
-  background-color: #f5e0e0;
+  background-color: #f0d8d8;
 }
 
 .filter-icon-img {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   object-fit: contain;
 }
 
@@ -301,11 +325,12 @@ body {
 .search-box {
   display: flex;
   align-items: center;
+  flex-direction: row-reverse;
   background: white;
-  border: 1px solid #767676;
+  border: 1.5px solid #c8a8a8;
   border-radius: 8px;
   padding: 0 12px;
-  height: 42px;
+  height: 38px;
   gap: 8px;
 }
 
@@ -313,19 +338,21 @@ body {
   border: none;
   outline: none;
   font-size: 14px;
-  width: 140px;
+  width: 200px;
   color: #333;
+  flex: 1;
 }
 
 .search-box input::placeholder {
-  color: #aaa;
+  color: #bbb;
 }
 
 .search-icon-img {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   object-fit: contain;
   flex-shrink: 0;
+  opacity: 0.4;
 }
 
 .board-divider {
@@ -421,9 +448,17 @@ body {
   border: 1px solid #eee;
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-  z-index: 100;
-  min-width: 140px;
+  z-index: 9999;
+  min-width: 120px;
+  white-space: nowrap;
   overflow: hidden;
+}
+
+/* 카드 드롭다운 - overflow 탈출용 fixed */
+.card-dropdown-fixed {
+  position: fixed !important;
+  z-index: 9999 !important;
+  width: 140px;
 }
 
 .dropdown-menu button {
@@ -442,7 +477,7 @@ body {
   background-color: #f5e0e0;
 }
 
-/* 카드 목록 - 세로 스크롤 */
+/* 카드 목록 - 세로 스크롤 (스크롤바 숨김) */
 .card-list {
   display: flex;
   flex-direction: column;
@@ -450,6 +485,12 @@ body {
   overflow-y: auto;
   flex: 1;
   padding-right: 2px;
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE */
+}
+
+.card-list::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari */
 }
 
 /* ════════════════════════════════
@@ -707,4 +748,30 @@ body {
 
 .add-card-btn:hover {
   background-color: #c55;
+}
+
+/* 기간 만료 카드 - 반투명 */
+.card-item.expired {
+  opacity: 0.4;
+}
+
+/* 사이드바 설정 - 라디오 선택 */
+.expired-setting-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.expired-setting-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.expired-setting-options input[type="radio"] {
+  accent-color: #d97070;
 }

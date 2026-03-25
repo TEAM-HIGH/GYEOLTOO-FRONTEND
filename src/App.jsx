@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import Board from './components/Board'
 import logo from './assets/gyeoltoo.png'
-import * as api from './api'
+import { fetchBoard, createList, updateList, deleteList, createCard, updateCard, deleteCard } from './api'
 import './App.css'
+
+const DOT_COLORS = ['#D97070', '#e1b94a', '#42cc70', '#56aed9', '#955fd8', '#e458ca']
+const randomColor = () => DOT_COLORS[Math.floor(Math.random() * DOT_COLORS.length)]
 
 function App() {
   const [lists, setLists] = useState([])
@@ -10,41 +13,26 @@ function App() {
   const [urgentMode, setUrgentMode] = useState(false)
   const [urgentThreshold, setUrgentThreshold] = useState(60)
   const [searchQuery, setSearchQuery] = useState('')
-  const [loading, setLoading] = useState(true)  // 로딩 상태
+  const [loading, setLoading] = useState(true)
 
-  // 사이드바 ... 메뉴 상태
   const [showSidebarMenu, setShowSidebarMenu] = useState(false)
   const [showUrgentSetting, setShowUrgentSetting] = useState(false)
+  const [showExpiredSetting, setShowExpiredSetting] = useState(false)
   const [thresholdInput, setThresholdInput] = useState(60)
   const [thresholdUnit, setThresholdUnit] = useState('분')
+  const [expiredAction, setExpiredAction] = useState('none') // 'none' | 'fade' | 'hide'
+  const [expiredActionInput, setExpiredActionInput] = useState('none')
   const sidebarMenuRef = useRef(null)
 
-  // ── 앱 시작할 때 서버에서 데이터 불러오기 ──────────────
+  // 앱 시작 시 GET /board 로 카드 포함 전체 리스트 한방에 조회
   useEffect(() => {
     async function loadData() {
       try {
-        // 1. 리스트 전체 조회
-        const listData = await api.fetchLists()
-
-        // 2. 각 리스트마다 카드 조회
-        const listsWithCards = await Promise.all(
-          listData.map(async (list) => {
-            const cards = await api.fetchCards(list.id)
-            return { ...list, cards }
-          })
-        )
-        setLists(listsWithCards)
+        const boardData = await fetchBoard()
+        setLists(boardData.map(l => ({ ...l, dotColor: randomColor() })))
       } catch (err) {
         console.error('데이터 로드 실패:', err)
-        // 서버 연결 안 될 때 더미 데이터로 대체
-        setLists([
-          {
-            id: 1, title: '리스트1',
-            cards: [
-              { id: 1, title: '집가고싶다', content: '', emoji: '😭', dueDate: null, completed: false },
-            ],
-          },
-        ])
+        setLists([])
       } finally {
         setLoading(false)
       }
@@ -71,70 +59,56 @@ function App() {
     setShowSidebarMenu(false)
   }
 
-  // ── 리스트 CRUD ──────────────────────────────────────
-
+  // 리스트 CRUD
   const addList = async () => {
     try {
-      const newList = await api.createList('새 리스트')  // 서버에 저장
-      setLists([...lists, { ...newList, cards: [] }])    // 받아온 id 사용
-    } catch (err) {
-      console.error('리스트 생성 실패:', err)
-    }
+      const newList = await createList('새 리스트')
+      setLists([...lists, { ...newList, cards: [], dotColor: randomColor() }])
+    } catch (err) { console.error('리스트 생성 실패:', err) }
   }
 
   const updateListTitle = async (listId, newTitle) => {
     try {
-      await api.updateList(listId, newTitle)             // 서버에 수정
+      await updateList(listId, newTitle)
       setLists(lists.map(l => l.id === listId ? { ...l, title: newTitle } : l))
-    } catch (err) {
-      console.error('리스트 수정 실패:', err)
-    }
+    } catch (err) { console.error('리스트 수정 실패:', err) }
   }
 
-  const deleteList = async (listId) => {
+  const removeList = async (listId) => {
     try {
-      await api.deleteList(listId)                       // 서버에서 삭제
+      await deleteList(listId)
       setLists(lists.filter(l => l.id !== listId))
-    } catch (err) {
-      console.error('리스트 삭제 실패:', err)
-    }
+    } catch (err) { console.error('리스트 삭제 실패:', err) }
   }
 
-  // ── 카드 CRUD ──────────────────────────────────────
-
+  // 카드 CRUD
   const addCard = async (listId, cardData) => {
     try {
-      const newCard = await api.createCard(listId, cardData)  // 서버에 저장
+      const newCard = await createCard(listId, cardData)
       setLists(lists.map(l =>
         l.id === listId ? { ...l, cards: [...l.cards, { ...newCard, dueDate: cardData.dueDate }] } : l
       ))
-    } catch (err) {
-      console.error('카드 생성 실패:', err)
-    }
+    } catch (err) { console.error('카드 생성 실패:', err) }
   }
 
-  const updateCard = async (listId, cardId, updatedData) => {
+  const updateCardItem = async (listId, cardId, updatedData) => {
     try {
-      await api.updateCard(cardId, updatedData)          // 서버에 수정
+      await updateCard(cardId, updatedData)
       setLists(lists.map(l =>
         l.id === listId
           ? { ...l, cards: l.cards.map(c => c.id === cardId ? { ...c, ...updatedData } : c) }
           : l
       ))
-    } catch (err) {
-      console.error('카드 수정 실패:', err)
-    }
+    } catch (err) { console.error('카드 수정 실패:', err) }
   }
 
-  const deleteCard = async (listId, cardId) => {
+  const removeCard = async (listId, cardId) => {
     try {
-      await api.deleteCard(cardId)                       // 서버에서 삭제
+      await deleteCard(cardId)
       setLists(lists.map(l =>
         l.id === listId ? { ...l, cards: l.cards.filter(c => c.id !== cardId) } : l
       ))
-    } catch (err) {
-      console.error('카드 삭제 실패:', err)
-    }
+    } catch (err) { console.error('카드 삭제 실패:', err) }
   }
 
   if (loading) return <div className="loading">불러오는 중...</div>
@@ -157,9 +131,10 @@ function App() {
               }}
             >···</button>
 
-            {showSidebarMenu && !showUrgentSetting && (
+            {showSidebarMenu && !showUrgentSetting && !showExpiredSetting && (
               <div className="sidebar-dropdown">
                 <button onClick={() => setShowUrgentSetting(true)}>🚨 급함 표시 설정</button>
+                <button onClick={() => { setExpiredActionInput(expiredAction); setShowExpiredSetting(true) }}>⏰ 기간 만료 카드 설정</button>
                 <button onClick={() => {}}>✏️ 이름 변경</button>
               </div>
             )}
@@ -168,10 +143,7 @@ function App() {
               <div className="sidebar-dropdown urgent-setting">
                 <p className="urgent-setting-label">급함 표시 기준</p>
                 <div className="urgent-setting-row">
-                  <input
-                    type="number"
-                    min="1"
-                    value={thresholdInput}
+                  <input type="number" min="1" value={thresholdInput}
                     onChange={(e) => setThresholdInput(Number(e.target.value))}
                     className="urgent-input"
                   />
@@ -181,6 +153,30 @@ function App() {
                 <div className="urgent-setting-btns">
                   <button className="btn-cancel-sm" onClick={() => { setShowUrgentSetting(false); setShowSidebarMenu(false) }}>취소</button>
                   <button className="btn-confirm-sm" onClick={handleUrgentSettingConfirm}>완료</button>
+                </div>
+              </div>
+            )}
+
+            {showExpiredSetting && (
+              <div className="sidebar-dropdown urgent-setting">
+                <p className="urgent-setting-label">기간 만료 카드 처리</p>
+                <div className="expired-setting-options">
+                  <label>
+                    <input type="radio" value="none" checked={expiredActionInput === 'none'} onChange={() => setExpiredActionInput('none')} />
+                    그냥 유지
+                  </label>
+                  <label>
+                    <input type="radio" value="fade" checked={expiredActionInput === 'fade'} onChange={() => setExpiredActionInput('fade')} />
+                    반투명 처리
+                  </label>
+                  <label>
+                    <input type="radio" value="hide" checked={expiredActionInput === 'hide'} onChange={() => setExpiredActionInput('hide')} />
+                    자동 숨김
+                  </label>
+                </div>
+                <div className="urgent-setting-btns">
+                  <button className="btn-cancel-sm" onClick={() => { setShowExpiredSetting(false); setShowSidebarMenu(false) }}>취소</button>
+                  <button className="btn-confirm-sm" onClick={() => { setExpiredAction(expiredActionInput); setShowExpiredSetting(false); setShowSidebarMenu(false) }}>완료</button>
                 </div>
               </div>
             )}
@@ -197,12 +193,13 @@ function App() {
         urgentThreshold={urgentThreshold}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        expiredAction={expiredAction}
         onAddList={addList}
         onUpdateListTitle={updateListTitle}
-        onDeleteList={deleteList}
+        onDeleteList={removeList}
         onAddCard={addCard}
-        onUpdateCard={updateCard}
-        onDeleteCard={deleteCard}
+        onUpdateCard={updateCardItem}
+        onDeleteCard={removeCard}
       />
     </div>
   )

@@ -12,6 +12,7 @@ function isUrgent(dueDate, urgentThreshold) {
 function ListColumn({
   list,
   filterEmojis, urgentMode, urgentThreshold, searchQuery,
+  expiredAction,
   onUpdateListTitle, onDeleteList,
   onAddCard, onUpdateCard, onDeleteCard,
 }) {
@@ -62,12 +63,14 @@ function ListColumn({
     setShowDatePicker(false)
   }
 
-  // 카드 필터링 (이모지 복수선택 + 검색)
+  // 카드 필터링 (이모지 복수선택 + 검색 + 기간 만료 처리)
   const filteredCards = list.cards.filter(card => {
     const matchEmoji = filterEmojis.length > 0 ? filterEmojis.includes(card.emoji) : true
     const matchSearch = searchQuery
-      ? card.title.includes(searchQuery) || card.content.includes(searchQuery)
+      ? card.title.includes(searchQuery) || card.content?.includes(searchQuery)
       : true
+    const isExpired = card.dueDate && new Date(card.dueDate) < new Date()
+    if (expiredAction === 'hide' && isExpired) return false
     return matchEmoji && matchSearch
   })
 
@@ -75,7 +78,7 @@ function ListColumn({
     <div className="list-column">
       {/* 리스트 헤더 */}
       <div className="list-header">
-        <span className="list-dot" />
+        <span className="list-dot" style={{ backgroundColor: list.dotColor }} />
         {isEditingTitle ? (
           <input
             className="list-title-input"
@@ -104,17 +107,21 @@ function ListColumn({
 
       {/* 카드 목록 - 세로 스크롤 */}
       <div className="card-list">
-        {filteredCards.map(card => (
-          <CardItem
-            key={card.id}
-            card={card}
-            listId={list.id}
-            urgentMode={urgentMode}
-            isUrgent={urgentMode && isUrgent(card.dueDate, urgentThreshold)}
-            onUpdateCard={onUpdateCard}
-            onDeleteCard={onDeleteCard}
-          />
-        ))}
+        {filteredCards.map(card => {
+          const isExpired = card.dueDate && new Date(card.dueDate) < new Date()
+          return (
+            <CardItem
+              key={card.id}
+              card={card}
+              listId={list.id}
+              urgentMode={urgentMode}
+              isUrgent={urgentMode && isUrgent(card.dueDate, urgentThreshold)}
+              isExpired={expiredAction === 'fade' && isExpired}
+              onUpdateCard={onUpdateCard}
+              onDeleteCard={onDeleteCard}
+            />
+          )
+        })}
       </div>
 
       {/* 카드 추가 폼 */}
